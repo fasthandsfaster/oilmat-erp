@@ -1,0 +1,6 @@
+Flask
+requests
+cryptography
+python-dotenv
+selenium
+persist-queue
