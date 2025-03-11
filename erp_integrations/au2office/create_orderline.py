@@ -76,7 +76,7 @@ def refresh_product_lines(driver):
     
     return products_list, line_count
 
-def create_orderline(dealer, worksheet_id, product_nr, product_amount, user, password):
+def create_orderline(dealer, worksheet_id, product_nr, product_amount, unique_id,user, password):
     # Check if it nessesary to create a new driver for each call
     driver = webdriver.Chrome(options=options)
     actions = ActionChains(driver)
@@ -90,12 +90,15 @@ def create_orderline(dealer, worksheet_id, product_nr, product_amount, user, pas
         driver.get("https://auth.cac.dk/Account/Login")
         driver.set_window_size(1728, 1055)
 
+        #Test data
+        #Bennys,37056,8221965,5,TAthomas,TAthomas77
         # Perform login actions
 
+
         try:
-            driver.find_element(By.ID, "inputEmail").send_keys("TAthomas")
+            driver.find_element(By.ID, "inputEmail").send_keys(user)
             driver.find_element(By.ID, "inputPassword").click()
-            driver.find_element(By.ID, "inputPassword").send_keys("TAthomas77")
+            driver.find_element(By.ID, "inputPassword").send_keys(password)
             driver.find_element(By.CSS_SELECTOR, ".btn").click()
         except Exception as e:
             logging.error(f": Login failed with exception: {e}")
@@ -107,8 +110,10 @@ def create_orderline(dealer, worksheet_id, product_nr, product_amount, user, pas
         driver.find_elements(By.TAG_NAME, "sb-worksheet-list")
         
         # Validate that the worksheet exists
+        xpath = f"//span[@class='font-bold' and text()='#{worksheet_id} ']"
+        #"//span[@class='font-bold' and text()='#36993 ']"
         worksheet = WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.XPATH, "//span[@class='font-bold' and text()='#36993 ']"))
+            EC.presence_of_element_located((By.XPATH,xpath))
         )
         worksheet.click()
         time.sleep(1)
@@ -118,7 +123,7 @@ def create_orderline(dealer, worksheet_id, product_nr, product_amount, user, pas
         # Add new productline and autocompleate by TAB
         # The find_element(By.XPATH,'.//child-cell/input') is used to find the input field in the cell
         # othervise the the line is not autocompleated/saved
-        products_list[line_count-1][0]['element'].find_element(By.XPATH,'.//child-cell/input').send_keys("8221965")
+        products_list[line_count-1][0]['element'].find_element(By.XPATH,'.//child-cell/input').send_keys(product_nr)
         products_list[line_count-1][0]['element'].find_element(By.XPATH,'.//child-cell/input').send_keys(Keys.TAB)
 
         # Reffresh the page to get the new productlines
@@ -130,13 +135,18 @@ def create_orderline(dealer, worksheet_id, product_nr, product_amount, user, pas
 
         # Append OilMat identifier to productdescription of new productline
         inner_element = products_list[line_count-2][1]['element'].find_element(By.XPATH, ".//div/div")
-        driver.execute_script("arguments[0].innerText += ' -- OilMat: 000001';", inner_element)
-
-        # Append OilMat identifier to productdescription of new productline
-        #inner_element = products_list[line_count-2][5]['element'].find_element(By.XPATH, ".//numeric-cell-renderer/input")
-        #driver.execute_script("arguments[0].innerText = '3';", inner_element)
+        actions.double_click(inner_element)
+        unique_txt = f' -- OilMat: {unique_id}'
+        actions.send_keys(unique_txt)
+        actions.send_keys(Keys.TAB)
+        actions.send_keys(Keys.TAB)
+        actions.send_keys(Keys.TAB)
+        actions.send_keys('5')
+        actions.send_keys(Keys.TAB)
+        actions.perform()
         
-        time.sleep(1)
+        time.sleep(100)
+        #driver.refresh()
         #products_list[line_count-2][4]['element'].find_element(By.XPATH,'//numeric-cell-renderer/input').send_keys(3)
         #products_list[line_count-2][4]['element'].find_element(By.XPATH,'.//numeric-cell-renderer/input').send_keys(Keys.TAB)
         # //*[@id="wrapper"]/div[2]/app-worksheet-root/div[1]/app-worksheet-view-v2/div[2]/div/div/div/div/worksheet-line-v2/ag-grid-angular/div/div[1]/div[2]/div[3]/div[1]/div/div[2]/div/div/div[19]/div[4]/numeric-cell-renderer/input
@@ -152,7 +162,7 @@ def create_orderline(dealer, worksheet_id, product_nr, product_amount, user, pas
             worksheet_found = False
 
 
-        time.sleep(10)  # Wait for the page to load
+        time.sleep(3)  # Wait for the page to load
     except Exception as e:
         logging.error(f": Failed to open au2office: {e}")
         raise loginException("Login failed")
@@ -163,10 +173,11 @@ def main(argv):
    worksheet_id=  argv[1] 
    product_nr =  argv[2] 
    product_amount =  argv[3] 
-   user =  argv[4] 
-   password =  argv[5] 
+   unique_id =  argv[4]
+   user =  argv[5] 
+   password =  argv[6] 
 
-   create_orderline(dealer, worksheet_id, product_nr, product_amount,user,password)
+   create_orderline(dealer, worksheet_id, product_nr, product_amount,unique_id,user,password)
 
 if __name__ == "__main__":
    main(sys.argv[1:])

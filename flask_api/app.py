@@ -11,7 +11,8 @@ import json
 import logging
 from datetime import datetime
 from order_status_db import init_db, get_order_status, insert_order_status, update_order_bad_request
-from erp_integrations.admanager.create_erp_orderline import create_orderline
+from erp_integrations.admanager.create_erp_orderline import create_orderline as admanager_create_orderline
+from erp_integrations.au2office.create_erp_orderline import create_orderline as au2office_create_orderline
 
 import os
 #from cryptography.fernet import Fernet
@@ -124,7 +125,7 @@ def create_order():
     return jsonify({"message": "Order line creation task added to queue"}), 200
 
 
-def worker(logger,erp_logger,worker_running,task_queue,error_queue,order_status_db):
+def worker(logger,erp_logger,worker_running,erp_type,task_queue,error_queue,order_status_db):
     while worker_running.wait():
         try:
             dealer, worksheet, product_nr, product_amount, unique_id, username,password = task_queue.get(timeout=1)
@@ -132,7 +133,14 @@ def worker(logger,erp_logger,worker_running,task_queue,error_queue,order_status_
             logger.info(f"\n\nIn worker loop: Creating orderline: {dealer}, {worksheet}, {product_nr}, {product_amount}")
         
             try:
-                create_orderline(dealer, worksheet, product_nr, product_amount,unique_id,username,password,logger,order_status_db)
+                if erp_type == 'admanager':
+                    admanager_create_orderline(dealer, worksheet, product_nr, product_amount,unique_id,username,password,logger,order_status_db)
+                elif erp_type == 'au2office':
+                    au2office_create_orderline(dealer, worksheet, product_nr, product_amount,unique_id,username,password,logger,order_status_db)
+                else:
+                    erp_logger.error(f"Invalid erp_type: {erp_type}")
+                    error_queue.put((dealer, worksheet, product_nr, product_amount,unique_id,username,password,f"Invalid erp_type: {erp_type}"))
+                
                 task_queue.task_done()
             except Exception as e:
                 error_queue.put((dealer, worksheet, product_nr, product_amount,unique_id,username,password,str(e)))
@@ -142,12 +150,12 @@ def worker(logger,erp_logger,worker_running,task_queue,error_queue,order_status_
         except:
             continue
     
-def create_app(erp_path,workshop,task_queue,worker_running):
+def create_app(workshop_path,workshop,task_queue,worker_running):
     app.config['workshop'] = workshop
     app.config['task_queue'] = task_queue
     app.config['worker_running'] = worker_running
 
-    file_handler = logging.FileHandler(erp_path + workshop + '_api.log', mode='a')
+    file_handler = logging.FileHandler(workshop_path + workshop + '_api.log', mode='a')
     file_handler.setLevel(logging.DEBUG)
     app.logger.addHandler(file_handler)
 
@@ -162,26 +170,26 @@ def main(argv):
     global task_queue
     global error_queue
 
-    erp_path = '../erp_integrations/'+ workshop+'/'
+    workshop_path = '../erp_integrations/'+ workshop+'/'
     erp_type_path = '../erp_integrations/' +erp_type + '/'
 
-    if not os.path.exists(erp_path):
-        print(f"Path {erp_path} does not exist")
-        os.makedirs(erp_path)
+    if not os.path.exists(workshop_path):
+        print(f"Path {workshop_path} does not exist")
+        os.makedirs(workshop_path)
 
     logger = logging.getLogger(__name__)
-    logging.basicConfig(level=logging.INFO,filename=erp_path + 'create_orderline.log', filemode='a', format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    logging.basicConfig(level=logging.INFO,filename=workshop_path + 'create_orderline.log', filemode='a', format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
-    init_db(erp_path + 'order_status.db')
+    init_db(workshop_path + 'order_status.db')
 
     sys.path.append(erp_type_path)
     # dynamically import the create_orderline function from the erp integration module that matches a given workshop
-    task_queue = Queue(erp_path + '_task_queue')
-    error_queue = Queue(erp_path + '_error_queue')
+    task_queue = Queue(workshop_path + '_task_queue')
+    error_queue = Queue(workshop_path + '_error_queue')
 
-    app = create_app(erp_path,workshop,task_queue,worker_running)
+    app = create_app(workshop_path,workshop,task_queue,worker_running)
 
-    worker_thread = threading.Thread(target=worker, args=(app.logger,logger,worker_running,task_queue,error_queue,erp_path + 'order_status.db'))
+    worker_thread = threading.Thread(target=worker, args=(app.logger,logger,worker_running,erp_type,task_queue,error_queue,workshop_path + 'order_status.db'))
     worker_thread.start()
 
     app.run(port=api_port_int) # Run the API on the specified port

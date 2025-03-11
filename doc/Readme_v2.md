@@ -6,12 +6,12 @@ This project is a solution that integrates the pumped oil orders from the OilMat
 
 - A flask api to handle the incomming orders.
 - A worker that consumes the orders and send them to workshop ERP solution.
-- The queue that handles comunication between api and worker
+- Queues that handles comunication between api and worker
 
 In addition there will be a number of changes in both the workshop and ILX management apis to allow users to configure and handle each integration. Philip will specify these changes in a seperate doc referenced from here.
 
 Workshop integration configuration and handling:
-- ERP system
+- Type of ERP system
 - User credentials
 - Active indicator
 - Activate/deactivate integration
@@ -22,7 +22,7 @@ Management api:
 - Start/Stop integration worker 
 - Kill integration api.
 
-
+The solution is build using the selenium package for python and the chrome webdriver.
 
 Currently its planed to start a seperate flask server/api and consumer pr workshop ERP integration. This ensures that problems conserning one workshop wont affect others and allow for easy scalability.
 
@@ -40,19 +40,23 @@ Kills an api instance.
 **Response:**
 - `200 OK` with a JSON object indicating weather the api instance were running or not.
 
-#### <span style="color:blue">GET /queue</span>
+#### <span style="color:blue">GET /queue?type={type}</span>
 
-Retrieves the current tasks in the queue.
+The type parameter can have the value <span style="color:blue">task</span> end<span style="color:blue">error</span>.
+Retrieves the current tasks in the specified queue type.
 
 **Response:**
 - `200 OK` with a JSON object containing the list of tasks in the queue and the length of the queue.
+- `400` wrong queue type
 
 #### <span style="color:blue">PUT /clear_queue</span>
 
-Clears all tasks from the queue.
+The type parameter can have the value <span style="color:blue">task</span> end<span style="color:blue">error</span>.
+Clears all in the specified queue type.
 
 **Response:**
 - `200 OK` with a JSON object indicating the queue has been cleared.
+- `400` wrong queue type
 
 #### <span style="color:blue">PUT /start_worker</span>
 
@@ -79,7 +83,7 @@ Adds a task to create an order line to the queue.
     "worksheet": "558",
     "product_nr": "10",
     "product_amount": "5",
-    "uniqueid": "xxx",
+    "unique_id": "xxx",
     "username": "admin",
     "password":  "gygag",
 }
@@ -89,60 +93,68 @@ Adds a task to create an order line to the queue.
 - `200 OK` with a JSON object indicating the task has been added to the queue.
 - `400 Bad Request` if any required parameters are missing.
 
-#### <span style="color:blue">GET /get_order_status
+#### <span style="color:blue">GET /get_order_status?unique_id={id}</span>
 
-Get the current status of a placed order, an order will go trough the following statuses:
+Get the current status of a placed order, asuccessful order will go trough the following states:
 
-- placed
+- preceived
 - processing
-- created
+- completed
 
-In case of problems in the flow the returned status will be error and a reason code and a reason text is supplied
+There are 2 error states:
+
+- bad request. Set in case the body of a create request contains wrong or missing parameters.
+- failed. All other error senarios.
 
 **Response:**
 - `200 OK` with a JSON object indicating the task has been added to the queue.
-- `400 Bad Request` if any required parameters are missing.
+- `400` order_id missing.
+- `404` order_id not found
 
 
 
 ## Files and Directories
 
+requerements.txt  -- all nesesary dependencies<br>
+Readme.md -- This doc<br>
+<span style="color:lightgreen">erp_integrations/</span> -- contains all selenium code<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:lightgreen">au2office/</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;create_erp_orderline.py<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:lightgreen">admanager/</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;create_erp_orderline.py<br><br>
+<span style="color:lightgreen">workshops/</span> -- One subdirectory for each integrated workshop containing queues and status db<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:lightgreen">workshop1/</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;order_status.db  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;create_orderline.log  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;api.log  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:lightgreen">_task_queue/</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:lightgreen">_error_queue/</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:lightgreen">workshop2/</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:lightgreen">workshopN/</span><br><br>
+<span style="color:lightgreen">flask_api/</span> -- api code<br>
+&nbsp;&nbsp;&nbsp;&nbsp;app.py<br>
+&nbsp;&nbsp;&nbsp;&nbsp;order_status_db.py<br><br>
+<span style="color:lightgreen">chromedriver/</span>
+
+
+## Install
+
+### Test
+
+The test setup is located under the ilx-admin user in C:\Users\ilx-admin\LHP\python_selenium>.
+
+The dependencies are installed in a venv virtual environment actvated by:
+
 ```
-api.py - The API server file using Flask.
-
-WORKSHOP_api.log - Log file for the API.
-
-ERPSYSTEM_create_orderline.py - Script for creating order lines using Selenium. There will be as seperate file pr ERP integration.
-
-WORKSHOP_create_orderline.log - Log file for admanager integration
-
-api.py - Main API server file using Flask.
-
-create_client.py - Test script for creating an orderline via the api
-
-requirements.txt - File listing all the dependencies required to run the application.
-
-task_queue - Directory containing task queue files.
+python_selenium> .\virtualenv\Scripts\activate
 ```
 
-## Install 
-
-### Dependencies
-
-The solution uses the following python components:
-
-- Flask
-- requests
-- dotenv
-- selenium
-- persistqueue
-- SQLite
+#### Dependencies
 
 Install the dependencies using pip:
 ```sh
 pip install -r requirements.txt
 ```
-
 
 ### Start Integration
 
@@ -156,6 +168,11 @@ Durring normal operation an ERP integration needs to be started/restarted in the
 
 Shell command to start an api instances
    ```sh
-   python api.py port workshop
+   python api.py port workshop integration-type
+   ```
 
+   Example
+
+   ```sh
+    python3 app.py 5000 'hosses' 'admanager' 
    ```

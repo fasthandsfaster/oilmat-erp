@@ -31,18 +31,20 @@ The application provides the below endpoints to interact with the workshop ERP s
 #### <span style="color:blue">GET /alive</span>
 
 Checks if the API is alive and if the worker is running.
+
 **Response:**
 - `200 OK` with a JSON object indicating the status of API + worker and the workshop that the api instance is serving.
 
 #### <span style="color:blue">PUT /kill</span>
 
 Kills an api instance.
+
 **Response:**
 - `200 OK` with a JSON object indicating weather the api instance were running or not.
 
 #### <span style="color:blue">GET /queue?type={type}</span>
 
-The type parameter can have the value <span style="color:blue">task</span> end<span style="color:blue">error</span>.
+The type parameter can have the value <span style="color:blue">task</span> and <span style="color:blue">error</span>.
 Retrieves the current tasks in the specified queue type.
 
 **Response:**
