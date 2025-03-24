@@ -6,17 +6,24 @@ import sys
 
 
 def main(argv):
-    unique_id =  argv[0] 
 
-    url = "http://localhost:5000/create"
+    port = argv[0]
+    worksheet = argv[1]
+    product_nr = argv[2]
+    product_amount = argv[3]
+    unique_id =  argv[4] 
+    username = argv[5]
+    password = argv[6]
+
+    url = "http://localhost:"+ port +"/create"
     data = {
         "dealer": "admanager",
-        "worksheet": "559",
-        "product_nr": "10",
-        "product_amount": "5",
+        "worksheet": worksheet,
+        "product_nr": product_nr,
+        "product_amount": product_amount,
         "unique_id": unique_id,
-        "username": "rolf@mandrup.dk",
-        "password": "Adm@1234"
+        "username": username,
+        "password": password
     }
 
     json_data = json.dumps(data)

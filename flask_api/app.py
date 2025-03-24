@@ -11,8 +11,8 @@ import json
 import logging
 from datetime import datetime
 from order_status_db import init_db, get_order_status, insert_order_status, update_order_bad_request
-from erp_integrations.admanager.create_erp_orderline import create_orderline as admanager_create_orderline
-from erp_integrations.au2office.create_erp_orderline import create_orderline as au2office_create_orderline
+from erp_integration_types.admanager.create_erp_orderline import create_orderline as admanager_create_orderline
+from erp_integration_types.au2office.create_erp_orderline import create_orderline as au2office_create_orderline
 
 import os
 #from cryptography.fernet import Fernet
@@ -61,7 +61,8 @@ def queue():
         queue.put(queue_list[i])
 
     queue_data_str = str(queue_list)
-    return jsonify({"Order queue": queue_data_str}), 200
+
+    return jsonify({"queue": queue_data_str}), 200
 
 @app.route('/clear_queue', methods=['PUT'])
 def clear_queue():
@@ -155,7 +156,7 @@ def create_app(workshop_path,workshop,task_queue,worker_running):
     app.config['task_queue'] = task_queue
     app.config['worker_running'] = worker_running
 
-    file_handler = logging.FileHandler(workshop_path + workshop + '_api.log', mode='a')
+    file_handler = logging.FileHandler(workshop_path + 'api.log', mode='a')
     file_handler.setLevel(logging.DEBUG)
     app.logger.addHandler(file_handler)
 
@@ -170,8 +171,8 @@ def main(argv):
     global task_queue
     global error_queue
 
-    workshop_path = '../erp_integrations/'+ workshop+'/'
-    erp_type_path = '../erp_integrations/' +erp_type + '/'
+    workshop_path = '../workshop_logscd /'+ workshop+'/'
+    erp_type_path = 'erp_integration_types/' +erp_type + '/'
 
     if not os.path.exists(workshop_path):
         print(f"Path {workshop_path} does not exist")
@@ -184,8 +185,8 @@ def main(argv):
 
     sys.path.append(erp_type_path)
     # dynamically import the create_orderline function from the erp integration module that matches a given workshop
-    task_queue = Queue(workshop_path + '_task_queue')
-    error_queue = Queue(workshop_path + '_error_queue')
+    task_queue = Queue(workshop_path + 'task_queue')
+    error_queue = Queue(workshop_path + 'error_queue')
 
     app = create_app(workshop_path,workshop,task_queue,worker_running)
 
