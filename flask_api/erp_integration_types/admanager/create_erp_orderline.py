@@ -26,7 +26,7 @@ class handlingException(Exception):
 # Set up the WebDriver and ActionChains for chrome
 
 options = Options()
-options.add_argument("--headless=new")
+#options.add_argument("--headless=new")
 
 
 def create_orderline(dealer, worksheet, product_nr, product_amount, unique_id, user, password,logging,order_status_db):
@@ -46,12 +46,18 @@ def create_orderline(dealer, worksheet, product_nr, product_amount, unique_id, u
         except Exception as e:
             logging.error(f": Login failed with exception: {e}")
             raise openErpException("Falied to open admanager: {e}")
-
+        
+        time.sleep(2)
         # Perform login actions
         try:
-            driver.find_element(By.CSS_SELECTOR, "mat-form-field.ng-tns-c40-3 div.mat-form-field-flex > div").click()
+            #driver.find_element(By.CSS_SELECTOR, "mat-form-field.ng-tns-c40-3 div.mat-form-field-flex > div").click()
+            #driver.find_element(By.ID, "mat-input-0").send_keys(user)
+            #driver.find_element(By.CSS_SELECTOR, "mat-form-field.ng-tns-c40-4 div.mat-form-field-flex > div").click()
+            #driver.find_element(By.ID, "mat-input-1").send_keys(password)
+            #driver.find_element(By.TAG_NAME, "button").click()
+            driver.find_element(By.CSS_SELECTOR, "[data-placeholder='Email']").click()
             driver.find_element(By.ID, "mat-input-0").send_keys(user)
-            driver.find_element(By.CSS_SELECTOR, "mat-form-field.ng-tns-c40-4 div.mat-form-field-flex > div").click()
+            driver.find_element(By.CSS_SELECTOR, "[data-placeholder='Password']").click()
             driver.find_element(By.ID, "mat-input-1").send_keys(password)
             driver.find_element(By.TAG_NAME, "button").click()
         except Exception as e:
@@ -110,6 +116,8 @@ def create_orderline(dealer, worksheet, product_nr, product_amount, unique_id, u
                     for line in exist_lines:
                         print(line)
                         varenummer = line.find_element(By.CSS_SELECTOR, "[class='product-number']").text
+                        varenavn= ""
+                        antal = 0
                         if varenummer == product_nr:
                             varenavn = line.find_element(By.CSS_SELECTOR, "[class='product-name']").text
                             antal = line.find_element(By.CSS_SELECTOR, "[class='product-amount-amount']").text

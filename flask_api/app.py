@@ -171,8 +171,8 @@ def main(argv):
     global task_queue
     global error_queue
 
-    workshop_path = '../workshop_logscd /'+ workshop+'/'
-    erp_type_path = 'erp_integration_types/' +erp_type + '/'
+    workshop_path = '../workshop_logs/'+workshop+'/'
+    erp_type_path = 'erp_integration_types/'+erp_type+ '/'
 
     if not os.path.exists(workshop_path):
         print(f"Path {workshop_path} does not exist")

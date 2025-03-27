@@ -17,7 +17,7 @@ def main(argv):
 
     url = "http://localhost:"+ port +"/create"
     data = {
-        "dealer": "admanager",
+        "dealer": "Gygag",
         "worksheet": worksheet,
         "product_nr": product_nr,
         "product_amount": product_amount,
