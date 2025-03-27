@@ -5,7 +5,7 @@ sys.path.append('../../')
 from flask import Flask, request, jsonify
 import json
 import threading
-from persistqueue import Queue
+from persist-queue import Queue
 #from erp_integrations.admanager.admanager_create_orderline import create_orderline
 import json
 import logging
@@ -171,7 +171,7 @@ def main(argv):
     global task_queue
     global error_queue
 
-    workshop_path = '../workshop_logs/'+workshop+'/'
+    workshop_path = '../../workshop_logs/'+workshop+'/'
     erp_type_path = 'erp_integration_types/'+erp_type+ '/'
 
     if not os.path.exists(workshop_path):
