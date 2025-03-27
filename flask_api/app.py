@@ -9,7 +9,7 @@ from persistqueue import Queue
 #from erp_integrations.admanager.admanager_create_orderline import create_orderline
 import json
 import logging
-from datetime import datetime
+import time
 from order_status_db import init_db, get_order_status, insert_order_status, update_order_bad_request
 from erp_integration_types.admanager.create_erp_orderline import create_orderline as admanager_create_orderline
 from erp_integration_types.au2office.create_erp_orderline import create_orderline as au2office_create_orderline
@@ -149,6 +149,7 @@ def worker(logger,erp_logger,worker_running,erp_type,task_queue,error_queue,orde
                 #print(f"Error creating order line: {str(e)}")
 
         except:
+            time.sleep(1)
             continue
     
 def create_app(workshop_path,workshop,task_queue,worker_running):
