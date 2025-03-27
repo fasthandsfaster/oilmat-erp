@@ -5,7 +5,7 @@ sys.path.append('../../')
 from flask import Flask, request, jsonify
 import json
 import threading
-from persist-queue import Queue
+from persistqueue import Queue
 #from erp_integrations.admanager.admanager_create_orderline import create_orderline
 import json
 import logging
