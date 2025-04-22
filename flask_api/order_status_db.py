@@ -7,7 +7,6 @@ status_db_name = ''
 def init_db(workshop_db):
     global status_db_name 
     status_db_name = workshop_db
-    print(status_db_name)
     conn = sqlite3.connect(status_db_name)
 
     c = conn.cursor()
@@ -17,8 +16,8 @@ def init_db(workshop_db):
     conn.close()
 
 def insert_order_status(unique_id,status,reason):
-    print('insert_order_status start')
-    print(status_db_name)
+    #print('insert_order_status start')
+    #print(status_db_name)
     conn = sqlite3.connect(status_db_name)
     c = conn.cursor()
     c.execute('''INSERT OR REPLACE INTO order_status (unique_id,status, reason) VALUES (?,?,?)''', (unique_id,status,reason))
@@ -44,9 +43,9 @@ def update_order_processing(unique_id,order_status_db):
     conn = sqlite3.connect(order_status_db)
     c = conn.cursor()
     c.execute('''update order_status set status = ? where unique_id = ?''', ('processing',unique_id))
-    print('update_order_processing')
-    print(unique_id)    
-    print(order_status_db)
+    #print('update_order_processing')
+    #print(unique_id)    
+    #print(order_status_db)
     conn.commit()
     conn.close()
 
@@ -59,9 +58,9 @@ def update_order_failed(unique_id,reason,order_status_db):
     conn.close()
 
 def update_order_completed(unique_id,order_status_db):
-    print('update_order_compleated')
-    print(unique_id)    
-    print(order_status_db)
+    #print('update_order_compleated')
+    #print(unique_id)    
+    #print(order_status_db)
     conn = sqlite3.connect(order_status_db)
     c = conn.cursor()
     c.execute('''update order_status set status = ? where unique_id = ?''', ('completed',unique_id))

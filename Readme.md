@@ -20,7 +20,6 @@ Management api:
 - Get health overview for integrations
 - Start/Stop integration api 
 - Start/Stop integration worker 
-- Kill integration api.
 
 The solution is build using the selenium package for python and the chrome webdriver.
 
@@ -80,6 +79,7 @@ Starts the worker thread to process tasks in the queue.
 {
     "Worker running":true
 }
+```
 
 #### <span style="color:blue">PUT /stop_worker</span>
 
@@ -93,6 +93,7 @@ Stops the worker thread.
 {
     "Worker running":false
 }
+```
 
 #### <span style="color:blue">POST /create
 
@@ -115,7 +116,7 @@ Adds a task to create an order line to the queue.
 - `200 OK` with a JSON object indicating the task has been added to the queue.
 - `400 Bad Request` if any required parameters are missing.
 
-#### <span style="color:blue">GET /get_order_status?unique_id={id}</span>
+#### <span style="color:blue">GET /check_order_status?unique_id={id}</span>
 
 Get the current status of a placed order, asuccessful order will go trough the following states:
 
@@ -133,6 +134,11 @@ There are 2 error states:
 - `400` order_id missing.
 - `404` order_id not found
 
+**Request Body:**
+```json
+{"reason":{"dealer": "Gygag", "worksheet": "560", "product_nr": "10", "product_amount": "5", "unique_id": "0001", "username": "rolf@mandrup.dk", "password": "Adm@1234"},
+"status":"completed","unique_id":"0001"}
+```
 
 
 ## Files and Directories
@@ -166,13 +172,13 @@ Readme.md -- This doc<br>
 
 ## Install
 
-### Test
+### Server setup
 
-The test setup is located under the ilx-admin user in C:\Users\ilx-admin\LHP\python_selenium>.
+The solution is installed with the ilx-admin user in C:\OILMAT-INTEGRATION>.
 
 The dependencies are installed in a venv virtual environment actvated by:
 
-```
+```sh
 python_selenium> .\virtualenv\Scripts\activate
 ```
 
@@ -203,3 +209,4 @@ Shell command to start an api instances
    ```sh
     python3 app.py 5000 'hosses' 'admanager' 
    ```
+Currently 2 integration-types exists, 'admanager' and 'au2office'

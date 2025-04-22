@@ -8,7 +8,7 @@ import sys
 def main(argv):
 
     port = argv[0]
-    worksheet = argv[1]
+    case_nr = argv[1]
     product_nr = argv[2]
     product_amount = argv[3]
     unique_id =  argv[4] 
@@ -18,7 +18,7 @@ def main(argv):
     url = "http://localhost:"+ port +"/create"
     data = {
         "dealer": "Gygag",
-        "worksheet": worksheet,
+        "case_nr": case_nr,
         "product_nr": product_nr,
         "product_amount": product_amount,
         "unique_id": unique_id,

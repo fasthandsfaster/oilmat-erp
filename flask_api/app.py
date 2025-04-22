@@ -13,7 +13,7 @@ import time
 from order_status_db import init_db, get_order_status, insert_order_status, update_order_bad_request
 from erp_integration_types.admanager.create_erp_orderline import create_orderline as admanager_create_orderline
 from erp_integration_types.au2office.create_erp_orderline import create_orderline as au2office_create_orderline
-
+from waitress import serve
 import os
 #from cryptography.fernet import Fernet
 #from dotenv import load_dotenv
@@ -84,13 +84,13 @@ def clear_queue():
     queue_data_str = str(queue_list)
     return jsonify({"Queue elements removed": queue_data_str}), 200
 
-@app.route('/start_worker', methods=['GET'])
+@app.route('/start_worker', methods=['PUT'])
 def start_worker():
     app.logger.info("start_worker called")
     worker_running.set()
     return jsonify({"Worker running": worker_running.is_set()}), 200
 
-@app.route('/stop_worker', methods=['GET'])
+@app.route('/stop_worker', methods=['PUT'])
 def stop_worker():
     app.logger.info("stop_worker called")
     #global worker_running
@@ -107,7 +107,7 @@ def create_order():
     data = json.loads(json_data)
 
     dealer = data['dealer']
-    worksheet = data['worksheet']
+    case_nr = data['case_nr']
     product_nr = data['product_nr']
     product_amount = data['product_amount']
     unique_id = data['unique_id']
@@ -116,12 +116,12 @@ def create_order():
     
     insert_order_status(unique_id,'received',json_data)
     
-    if not all([dealer, worksheet, product_nr, product_amount, unique_id, username,password]):
+    if not all([dealer, case_nr, product_nr, product_amount, unique_id, username,password]):
         update_order_bad_request(unique_id,json_data)
         return jsonify({"error": "Missing required parameters"}), 400
     
     # Add the task to the queue
-    task_queue.put((dealer, worksheet, product_nr, product_amount,unique_id,username,password))
+    task_queue.put((dealer, case_nr, product_nr, product_amount,unique_id,username,password))
 
     return jsonify({"message": "Order line creation task added to queue"}), 200
 
@@ -129,24 +129,24 @@ def create_order():
 def worker(logger,erp_logger,worker_running,erp_type,task_queue,error_queue,order_status_db):
     while worker_running.wait():
         try:
-            dealer, worksheet, product_nr, product_amount, unique_id, username,password = task_queue.get(timeout=1)
+            dealer, case_nr, product_nr, product_amount, unique_id, username,password = task_queue.get(timeout=1)
 
-            logger.info(f"\n\nIn worker loop: Creating orderline: {dealer}, {worksheet}, {product_nr}, {product_amount}")
+            logger.info(f"\n\nIn worker loop: Creating orderline: {dealer}, {case_nr}, {product_nr}, {product_amount}")
         
             try:
                 if erp_type == 'admanager':
-                    admanager_create_orderline(dealer, worksheet, product_nr, product_amount,unique_id,username,password,logger,order_status_db)
+                    admanager_create_orderline(dealer, case_nr, product_nr, product_amount,unique_id,username,password,logger,order_status_db)
                 elif erp_type == 'au2office':
-                    au2office_create_orderline(dealer, worksheet, product_nr, product_amount,unique_id,username,password,logger,order_status_db)
+                    au2office_create_orderline(dealer, case_nr, product_nr, product_amount,unique_id,username,password,logger,order_status_db)
                 else:
                     erp_logger.error(f"Invalid erp_type: {erp_type}")
-                    error_queue.put((dealer, worksheet, product_nr, product_amount,unique_id,username,password,f"Invalid erp_type: {erp_type}"))
+                    error_queue.put((dealer, case_nr, product_nr, product_amount,unique_id,username,password,f"Invalid erp_type: {erp_type}"))
                 
                 task_queue.task_done()
             except Exception as e:
-                error_queue.put((dealer, worksheet, product_nr, product_amount,unique_id,username,password,str(e)))
+                error_queue.put((dealer, case_nr, product_nr, product_amount,unique_id,username,password,str(e)))
                 error_queue.task_done()
-                #print(f"Error creating order line: {str(e)}")
+
 
         except:
             time.sleep(1)
@@ -172,16 +172,20 @@ def main(argv):
     global task_queue
     global error_queue
 
+    #logger = logging.getLogger(__name__)
+    logger = logging.getLogger('waitress')
+    
+
     workshop_path = '../../workshop_logs/'+workshop+'/'
     erp_type_path = 'erp_integration_types/'+erp_type+ '/'
-
-    if not os.path.exists(workshop_path):
-        print(f"Path {workshop_path} does not exist")
-        os.makedirs(workshop_path)
-
-    logger = logging.getLogger(__name__)
+    
     logging.basicConfig(level=logging.INFO,filename=workshop_path + 'create_orderline.log', filemode='a', format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
+    if not os.path.exists(workshop_path):
+        logging.debug(f"Path {workshop_path} does not exist")
+        os.makedirs(workshop_path)
+
+ 
     init_db(workshop_path + 'order_status.db')
 
     sys.path.append(erp_type_path)
@@ -193,8 +197,12 @@ def main(argv):
 
     worker_thread = threading.Thread(target=worker, args=(app.logger,logger,worker_running,erp_type,task_queue,error_queue,workshop_path + 'order_status.db'))
     worker_thread.start()
+    serve(app, host='localhost', port=8001)
+    #api_thread = threading.Thread(target=serve(app,port=api_port_int))
+    #api_thread.start()
+    #serve(app,port=api_port_int)
 
-    app.run(port=api_port_int) # Run the API on the specified port
+    #app.run(port=api_port_int) # Run the API on the specified port
 
 if __name__ == '__main__':
     main(sys.argv[1:])

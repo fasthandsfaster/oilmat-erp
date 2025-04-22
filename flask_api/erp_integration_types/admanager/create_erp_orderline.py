@@ -114,7 +114,6 @@ def create_orderline(dealer, worksheet, product_nr, product_amount, unique_id, u
                     oilmat_line_amount_sum = 0
                     other_line_amount_sum = 0
                     for line in exist_lines:
-                        print(line)
                         varenummer = line.find_element(By.CSS_SELECTOR, "[class='product-number']").text
                         varenavn= ""
                         antal = 0
@@ -146,8 +145,7 @@ def create_orderline(dealer, worksheet, product_nr, product_amount, unique_id, u
                 varenavn_input = driver.find_element(By.CSS_SELECTOR, "[data-placeholder='Varenavn']")
                 #driver.execute_script("arguments[0].innerText += ' -- OilMat: 000001';", varenavn_input)
                 varenavn_input.click()
-
-                print(varenavn_input.text)         
+                   
                 varenavn_input.send_keys(' -- OilMat:' + unique_id)
                 varenavn_input.send_keys(Keys.TAB)
 
@@ -174,7 +172,7 @@ def create_orderline(dealer, worksheet, product_nr, product_amount, unique_id, u
                 raise handlingException(f"Creating orderline for dealer: {dealer} at {create_time} failed: {e}")
 
     except Exception as e:
-        update_order_failed(unique_id,order_status_db)
+        update_order_failed(unique_id,'handle varenummer',order_status_db)
         raise
         # Send mail 
     finally:
