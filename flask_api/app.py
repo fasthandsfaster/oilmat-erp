@@ -13,7 +13,7 @@ import time
 from order_status_db import init_db, get_order_status, insert_order_status, update_order_bad_request
 from erp_integration_types.admanager.create_erp_orderline import create_orderline as admanager_create_orderline
 from erp_integration_types.au2office.create_erp_orderline import create_orderline as au2office_create_orderline
-#from waitress import serve
+from waitress import serve
 import os
 #from cryptography.fernet import Fernet
 #from dotenv import load_dotenv
@@ -197,7 +197,7 @@ def main(argv):
 
     worker_thread = threading.Thread(target=worker, args=(app.logger,logger,worker_running,erp_type,task_queue,error_queue,workshop_path + 'order_status.db'))
     worker_thread.start()
-    serve(app, host='localhost', port=8001)
+    serve(app, host='localhost', port=api_port_int)
     #api_thread = threading.Thread(target=serve(app,port=api_port_int))
     #api_thread.start()
     #serve(app,port=api_port_int)
