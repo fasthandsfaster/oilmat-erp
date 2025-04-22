@@ -103,7 +103,7 @@ Adds a task to create an order line to the queue.
 ```json
 {
     "workshop": "Bennys Auto",
-    "worksheet": "558",
+    "case_id": "558",
     "product_nr": "10",
     "product_amount": "5",
     "unique_id": "xxx",
@@ -118,9 +118,9 @@ Adds a task to create an order line to the queue.
 
 #### <span style="color:blue">GET /check_order_status?unique_id={id}</span>
 
-Get the current status of a placed order, asuccessful order will go trough the following states:
+Get the current status of a placed order, a successful order will go trough the following states:
 
-- preceived
+- received
 - processing
 - completed
 
@@ -134,10 +134,11 @@ There are 2 error states:
 - `400` order_id missing.
 - `404` order_id not found
 
-**Request Body:**
+***Response Json:***
 ```json
-{"reason":{"dealer": "Gygag", "worksheet": "560", "product_nr": "10", "product_amount": "5", "unique_id": "0001", "username": "rolf@mandrup.dk", "password": "Adm@1234"},
-"status":"completed","unique_id":"0001"}
+{
+    "reason":"handle varenummer","status":"failed","unique_id":"0007"
+}
 ```
 
 
