@@ -36,7 +36,7 @@ Checks if the API is alive and if the worker is running.
 
 ***Response Json:***
 ```json
-{
+{  
     "API is alive, 
     worker running":true/false
 }

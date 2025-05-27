@@ -178,14 +178,13 @@ def main(argv):
 
     workshop_path = '../../workshop_logs/'+workshop+'/'
     erp_type_path = 'erp_integration_types/'+erp_type+ '/'
-    
-    logging.basicConfig(level=logging.INFO,filename=workshop_path + 'create_orderline.log', filemode='a', format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
     if not os.path.exists(workshop_path):
         logging.debug(f"Path {workshop_path} does not exist")
         os.makedirs(workshop_path)
+        
+    logging.basicConfig(level=logging.INFO,filename=workshop_path + 'create_orderline.log', filemode='a', format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
- 
     init_db(workshop_path + 'order_status.db')
 
     sys.path.append(erp_type_path)
