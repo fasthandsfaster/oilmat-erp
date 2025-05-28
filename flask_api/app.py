@@ -100,25 +100,33 @@ def stop_worker():
 
 @app.route('/create', methods=['POST'])
 def create_order():
+    unique_id = 0
     app.logger.info("create_order called") 
 
-    json_data = request.get_json()
-
-    data = json.loads(json_data)
-
-    dealer = data['dealer']
-    case_nr = data['case_nr']
-    product_nr = data['product_nr']
-    product_amount = data['product_amount']
-    unique_id = data['unique_id']
-    username = data['username']
-    password = data['password']
+    try:
+        json_data = request.get_json()
+        data = json.loads(json_data)
+    except json.JSONDecodeError as e:
+        app.logger.error(f"JSON decode error: {e}")
+        update_order_bad_request(unique_id,json_data)
+        return jsonify({"error": "Invalid JSON format"}), 400
+    
+    try:
+        unique_id = data['unique_id']
+        dealer = data['dealer']
+        case_nr = data['case_nr']
+        product_nr = data['product_nr']
+        product_amount = data['product_amount']
+        username = data['username']
+        password = data['password']
+    except Exception as e:
+        error_text = f"Missing required parameter: {e}"
+        app.logger.error(error_text)
+        update_order_bad_request(unique_id,json_data)
+        
+        return jsonify({"error": error_text}), 400
     
     insert_order_status(unique_id,'received',json_data)
-    
-    if not all([dealer, case_nr, product_nr, product_amount, unique_id, username,password]):
-        update_order_bad_request(unique_id,json_data)
-        return jsonify({"error": "Missing required parameters"}), 400
     
     # Add the task to the queue
     task_queue.put((dealer, case_nr, product_nr, product_amount,unique_id,username,password))
@@ -182,7 +190,7 @@ def main(argv):
     if not os.path.exists(workshop_path):
         logging.debug(f"Path {workshop_path} does not exist")
         os.makedirs(workshop_path)
-        
+
     logging.basicConfig(level=logging.INFO,filename=workshop_path + 'create_orderline.log', filemode='a', format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
     init_db(workshop_path + 'order_status.db')

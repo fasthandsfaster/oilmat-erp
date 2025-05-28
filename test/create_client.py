@@ -19,7 +19,7 @@ def main(argv):
     data = {
         "dealer": "Gygag",
         "case_nr": case_nr,
-        "product_nr": product_nr,
+        #"product_nr": product_nr,
         "product_amount": product_amount,
         "unique_id": unique_id,
         "username": username,
@@ -33,9 +33,9 @@ def main(argv):
 
     # Print the response
     if response.status_code == 200:
-        print("Success:", response)
+        print("Success:", response.text)
     else:
-        print("Error:", response)
+        print("Error:", response.status_code, response.text)
 
 if __name__ == "__main__":
    main(sys.argv[1:])
