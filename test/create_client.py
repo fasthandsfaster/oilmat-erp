@@ -19,7 +19,7 @@ def main(argv):
     data = {
         "dealer": "Gygag",
         "case_nr": case_nr,
-        #"product_nr": product_nr,
+        "product_nr": product_nr,
         "product_amount": product_amount,
         "unique_id": unique_id,
         "username": username,
