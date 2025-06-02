@@ -15,6 +15,8 @@ from erp_integration_types.admanager.create_erp_orderline import create_orderlin
 from erp_integration_types.au2office.create_erp_orderline import create_orderline as au2office_create_orderline
 from waitress import serve
 import os
+import signal
+
 #from cryptography.fernet import Fernet
 #from dotenv import load_dotenv
 
@@ -25,7 +27,7 @@ worker_running = threading.Event()
 @app.route('/alive', methods=['GET'])
 def alive():
     app.logger.info("alive called") 
-    return jsonify({"API is alive, worker running": worker_running.is_set()}), 200
+    return jsonify({"API is alive, worker runningg": worker_running.is_set()}), 200
 
 @app.route('/check_order_status', methods=['GET'])
 def check_order_status():
@@ -83,6 +85,27 @@ def clear_queue():
 
     queue_data_str = str(queue_list)
     return jsonify({"Queue elements removed": queue_data_str}), 200
+
+def kill_func(pid):
+    time.sleep(5)  # Wait for 5 seconds before killing the process
+    os.kill(pid, signal.SIGTERM)
+
+@app.route('/kill', methods=['PUT'])
+def kill():
+    app.logger.info("kill called")
+    worker_running.clear()
+    
+    try:
+        # Attempt to gracefully shutdown the API
+        pid = os.getpid()
+        kill_thread = threading.Thread(target=kill_func, args=(pid,))
+        kill_thread.start()
+        return jsonify({"Shutting down":pid}), 200
+    except Exception as e:
+        app.logger.error(f"Error during shutdown: {e}")
+        return jsonify({"error": "Failed to shutdown API"}), 500
+     
+
 
 @app.route('/start_worker', methods=['PUT'])
 def start_worker():
@@ -179,6 +202,7 @@ def main(argv):
     api_port_int = int(api_port)
     global task_queue
     global error_queue
+    global worker_thread
 
     #logger = logging.getLogger(__name__)
     logger = logging.getLogger('waitress')

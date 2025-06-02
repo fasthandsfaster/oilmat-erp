@@ -23,7 +23,7 @@ Management api:
 
 The solution is build using the selenium package for python and the chrome webdriver.
 
-Currently its planed to start a seperate flask server/api and consumer pr workshop ERP integration. This ensures that problems conserning one workshop wont affect others and allow for easy scalability.
+Currently its planed to start a seperate flask waitressserver/api and worker pr workshop ERP integration. This ensures that problems conserning one workshop wont affect others and allow for easy scalability.
 
 The application provides the below endpoints to interact with the workshop ERP system:
 
@@ -61,11 +61,25 @@ Retrieves the current tasks in the specified queue type.
 #### <span style="color:blue">PUT /clear_queue</span>
 
 The type parameter can have the value <span style="color:blue">task</span> and <span style="color:blue">error</span>.
-Clears all in the specified queue type.
+Clears all in the specified queue type. 
 
 **Response:**
 - `200 OK` with a JSON object indicating the queue has been cleared.
 - `400` wrong queue type
+
+#### <span style="color:blue">PUT /kill</span>
+
+Starts a kill thread and returns. The api will stop after 5 sec.
+
+**Response:**
+- `200 OK` with a JSON object containg the pid of the process shutting down.
+
+***Response Json:***
+```json
+{
+    {"Shutting down":99999}
+}
+```
 
 #### <span style="color:blue">PUT /start_worker</span>
 
@@ -111,6 +125,7 @@ Adds a task to create an order line to the queue.
     "password":  "gygag",
 }
 ```
+The json should be passed as a string.
 
 **Response:**
 - `200 OK` with a JSON object indicating the task has been added to the queue.
