@@ -58,7 +58,7 @@ Retrieves the current tasks in the specified queue type.
 }
 ```
 
-#### <span style="color:blue">PUT /clear_queue</span>
+#### <span style="color:blue">PUT /clear_queue?type={type}</span>
 
 The type parameter can have the value <span style="color:blue">task</span> and <span style="color:blue">error</span>.
 Clears all in the specified queue type. 

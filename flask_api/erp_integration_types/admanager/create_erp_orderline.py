@@ -1,6 +1,7 @@
 import time
 import sys
 sys.path.append('../../')
+#sys.path.append('../../../')
 #import logging
 
 from selenium import webdriver
@@ -26,53 +27,49 @@ class handlingException(Exception):
 # Set up the WebDriver and ActionChains for chrome
 
 options = Options()
-options.add_argument("--headless=new")
+# options.add_argument("--headless=new")
 
 
 def create_orderline(dealer, worksheet, product_nr, product_amount, unique_id, user, password,logging,order_status_db):
     # Check if it nessesary to create a new driver for each call
     driver = webdriver.Chrome(options=options)
     actions = ActionChains(driver)
+
     try:
         create_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
         logging.info(f"\n\n*****************************************************************************************")
         logging.info(f"Creating orderline: {dealer}, {worksheet}, {product_nr}, {product_amount} at {create_time}")
         update_order_processing(unique_id,order_status_db)
-        #raise handlingException(f"Creating orderline for dealer: {dealer} at {create_time} failed with exception: {e}")
+        #raise handlingException(f"Creating orderline for dealer: {dealer} at {create_time} failed with exception:{e=}")
         try:
             # Navigate to the login page
             driver.get("https://manager.addanmark.dk/login")
             driver.set_window_size(1683, 517)
         except Exception as e:
-            logging.error(f": Login failed with exception: {e}")
-            raise openErpException("Falied to open admanager: {e}")
-        
+            logging.error(f": Failed to open Admanager:{e=}")
+            raise
+
         time.sleep(2)
         # Perform login actions
         try:
-            #driver.find_element(By.CSS_SELECTOR, "mat-form-field.ng-tns-c40-3 div.mat-form-field-flex > div").click()
-            #driver.find_element(By.ID, "mat-input-0").send_keys(user)
-            #driver.find_element(By.CSS_SELECTOR, "mat-form-field.ng-tns-c40-4 div.mat-form-field-flex > div").click()
-            #driver.find_element(By.ID, "mat-input-1").send_keys(password)
-            #driver.find_element(By.TAG_NAME, "button").click()
-            driver.find_element(By.CSS_SELECTOR, "[data-placeholder='Email']").click()
+            driver.find_element(By.CSS_SELECTOR, "[formcontrolname='email']").click()
             driver.find_element(By.ID, "mat-input-0").send_keys(user)
-            driver.find_element(By.CSS_SELECTOR, "[data-placeholder='Password']").click()
+            driver.find_element(By.CSS_SELECTOR, "[formcontrolname='password']").click()
             driver.find_element(By.ID, "mat-input-1").send_keys(password)
-            driver.find_element(By.TAG_NAME, "button").click()
+            driver.find_element(By.TAG_NAME, "button")
+            driver.find_element(By.CSS_SELECTOR, "[class='mdc-button__label']").click()
         except Exception as e:
-            logging.error(f": Login failed with exception: {e}")
-            raise loginException("Login failed: {e}")
+            logging.error(f": Login failed with exception:{e=}")
+            raise
 
         # Open worksheet(Arbejdskort) overview
         try:
-            time.sleep(.5)  # Wait for the page to load
-            driver.find_element(By.CSS_SELECTOR, "a:nth-of-type(5) > mat-icon").click()
+            time.sleep(.5)
+            driver.find_element(By.CSS_SELECTOR, "[routerlink='/worksheet']").click()
             time.sleep(.5)  # Wait for the products page to load
 
-                # Traverse the table of worksheets to ensure the input worksheet exists
+            # Traverse the table of worksheets to ensure the input worksheet exists
             worksheet_found = False
-
             table = driver.find_element(By.TAG_NAME, "table")
             tbody = table.find_element(By.TAG_NAME, "tbody")
             rows = tbody.find_elements(By.TAG_NAME, "tr")
@@ -83,13 +80,14 @@ def create_orderline(dealer, worksheet, product_nr, product_amount, unique_id, u
                     logging.info(f"Worksheet {worksheet} found")
                     worksheet_found = True
                     break
-        except:
-            logging.error(f"RPA steps to locate worksheet failed {worksheet} for dealer {dealer}: {e}")
-            raise handlingException(f"RPA steps to locate worksheet failed {worksheet} for dealer {dealer}: {e}")
+
+        except Exception as e:
+            logging.error(f"RPA steps to locate case_nr {worksheet} failed for dealer {dealer}:{e=}")
+            raise
 
         if not worksheet_found:
             logging.error(f": Worksheet {worksheet} for dealer {dealer} not found at {create_time}")
-            raise handlingException(f"Worksheet {worksheet} for dealer {dealer}")
+            raise handlingException(f"Worksheet {worksheet} for dealer {dealer} not found")
         else:
             # Open the located worksheet
             time.sleep(.5)
@@ -97,8 +95,8 @@ def create_orderline(dealer, worksheet, product_nr, product_amount, unique_id, u
                 cells[0].click()
             except Exception as e:
                 logging.info(f": Failed to open Worksheet {worksheet}")
-                raise handlingException(f": Failed to open Worksheet {worksheet} for dealer {dealer}: {e}")
-            
+                raise
+
             time.sleep(.5)  # Wait for the page to load
         
             try:
@@ -130,27 +128,28 @@ def create_orderline(dealer, worksheet, product_nr, product_amount, unique_id, u
 
                 calc_amount = int(product_amount)
             except Exception as e:
-                logging.info(f"Failed to handle existing orderlines for worksheet {worksheet}: {e}")
-                raise handlingException(f"Failed to handle existing orderlines for worksheet {worksheet}: {e}")
+                logging.info(f"Failed to handle existing orderlines for worksheet {worksheet}:{e=}")
+                raise
 
             # Create orderline, this part created a lot of problems submitting and the combination of keys to do the trick was found by trial and error
             # This section is wery fragile and may break if the site is updated or with minor changes that seems small 
             try:
-                varenummer_input = driver.find_element(By.CSS_SELECTOR, "[data-placeholder='Varenummer']")
+                varenummer_input = driver.find_element(By.CSS_SELECTOR, "[class='product-number']").find_element(By.TAG_NAME, "input")
                 varenummer_input.clear()
+                #varenummer_input.click()
                 varenummer_input.send_keys(str(product_nr))
                 varenummer_input.send_keys(Keys.TAB)
                 time.sleep(.5) 
-                #qdriver.refresh()
-                varenavn_input = driver.find_element(By.CSS_SELECTOR, "[data-placeholder='Varenavn']")
+                
+                varenavn_input = driver.find_element(By.CSS_SELECTOR, "[class='product-name']").find_element(By.TAG_NAME, "input")
                 #driver.execute_script("arguments[0].innerText += ' -- OilMat: 000001';", varenavn_input)
                 varenavn_input.click()
-                   
                 varenavn_input.send_keys(' -- OilMat:' + unique_id)
                 varenavn_input.send_keys(Keys.TAB)
 
                 time.sleep(.5) 
-                antal_input = driver.find_element(By.CSS_SELECTOR, "[data-placeholder='Antal']")
+                antal_input = driver.find_element(By.CSS_SELECTOR, "[class='product-amount']").find_element(By.TAG_NAME, "input")
+                # Calculate the amount to be added as the difference between the ordered amount and the sum of existing orderlines
                 antal_input.click() 
                 antal_input.clear()
                 antal_input.send_keys(str(calc_amount))
@@ -160,6 +159,7 @@ def create_orderline(dealer, worksheet, product_nr, product_amount, unique_id, u
                 time.sleep(.5) 
                 #Key press must be performed without any element selected
                 actions.send_keys(Keys.ENTER)
+
                 actions.perform()
 
                 # Orderline created 
@@ -168,16 +168,17 @@ def create_orderline(dealer, worksheet, product_nr, product_amount, unique_id, u
                 update_order_completed(unique_id,order_status_db)
 
             except Exception as e:
-                logging.info(f"Creating orderline for dealer: {dealer} at {create_time} failed")
-                raise handlingException(f"Creating orderline for dealer: {dealer} at {create_time} failed: {e}")
+                logging.info(f"Creating product for dealer: {dealer} at {create_time} failed")
+                raise
 
     except Exception as e:
         update_order_failed(unique_id,'handle varenummer',order_status_db)
+        logging.info(f"Creating orderline for dealer: {dealer} at {create_time} failed:{e=}")
         raise
         # Send mail 
     finally:
         # Close the WebDriver
-        time.sleep(1) 
+        time.sleep(5) 
         driver.quit()
 
 def main(argv):

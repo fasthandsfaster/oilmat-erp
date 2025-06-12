@@ -2,6 +2,7 @@ import sys
 #make sure to add the path to the parent directory of the project to the sys.path list. Makes the project modules available for import.
 sys.path.append('../')
 sys.path.append('../../')
+sys.path.append('../../../')
 from flask import Flask, request, jsonify
 import json
 import threading
@@ -102,7 +103,7 @@ def kill():
         kill_thread.start()
         return jsonify({"Shutting down":pid}), 200
     except Exception as e:
-        app.logger.error(f"Error during shutdown: {e}")
+        app.logger.error(f"Error during shutdown:{e=}")
         return jsonify({"error": "Failed to shutdown API"}), 500
      
 
@@ -130,7 +131,7 @@ def create_order():
         json_data = request.get_json()
         data = json.loads(json_data)
     except json.JSONDecodeError as e:
-        app.logger.error(f"JSON decode error: {e}")
+        app.logger.error(f"JSON decode error:{e=}")
         update_order_bad_request(unique_id,json_data)
         return jsonify({"error": "Invalid JSON format"}), 400
     
@@ -143,7 +144,7 @@ def create_order():
         username = data['username']
         password = data['password']
     except Exception as e:
-        error_text = f"Missing required parameter: {e}"
+        error_text = f"Missing required parameter:{e=}"
         app.logger.error(error_text)
         update_order_bad_request(unique_id,json_data)
         
@@ -177,7 +178,7 @@ def worker(logger,erp_logger,worker_running,erp_type,task_queue,error_queue,orde
             except Exception as e:
                 error_queue.put((dealer, case_nr, product_nr, product_amount,unique_id,username,password,str(e)))
                 error_queue.task_done()
-
+                task_queue.task_done()
 
         except:
             time.sleep(1)
