@@ -27,7 +27,7 @@ class handlingException(Exception):
 # Set up the WebDriver and ActionChains for chrome
 
 options = Options()
-# options.add_argument("--headless=new")
+options.add_argument("--headless=new")
 
 
 def create_orderline(dealer, worksheet, product_nr, product_amount, unique_id, user, password,logging,order_status_db):
