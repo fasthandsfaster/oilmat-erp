@@ -64,9 +64,9 @@ def create_orderline(dealer, worksheet, product_nr, product_amount, unique_id, u
 
         # Open worksheet(Arbejdskort) overview
         try:
-            time.sleep(.5)
+            time.sleep(1)
             driver.find_element(By.CSS_SELECTOR, "[routerlink='/worksheet']").click()
-            time.sleep(.5)  # Wait for the products page to load
+            time.sleep(1)  # Wait for the products page to load
 
             # Traverse the table of worksheets to ensure the input worksheet exists
             worksheet_found = False
@@ -90,7 +90,7 @@ def create_orderline(dealer, worksheet, product_nr, product_amount, unique_id, u
             raise handlingException(f"Worksheet {worksheet} for dealer {dealer} not found")
         else:
             # Open the located worksheet
-            time.sleep(.5)
+            time.sleep(1)
             try:
                 cells[0].click()
             except Exception as e:
